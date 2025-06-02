@@ -1,32 +1,32 @@
 # AgenticSeek Digital Ocean Deployment
 
-## Quick Start
+## Super Quick Start (One Command)
 
-1. **Clone repository on your Digital Ocean droplet:**
+```bash
+git clone https://github.com/zeroxf89/agenticSeek.git
+cd agenticSeek
+sudo ./quick_deploy.sh
+```
+
+That's it! Access: http://159.223.34.36:3000
+
+## Manual Deploy (if needed)
+
+1. **Clone repository:**
 ```bash
 git clone https://github.com/zeroxf89/agenticSeek.git
 cd agenticSeek
 ```
 
-2. **Set your configuration:**
+2. **Deploy and run:**
 ```bash
 export SERVER_IP=159.223.34.36
 export OPENAI_API_KEY=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
+chmod +x deploy_and_run.sh
+sudo ./deploy_and_run.sh
 ```
 
-3. **Deploy:**
-```bash
-chmod +x deploy_simple.sh
-sudo ./deploy_simple.sh
-```
-
-4. **Start backend:**
-```bash
-source agentic_seek_env/bin/activate
-python3 api.py
-```
-
-5. **Access:**
+3. **Access:**
 - Frontend: http://159.223.34.36:3000
 - Backend: http://159.223.34.36:8000
 
