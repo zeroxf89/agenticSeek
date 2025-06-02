@@ -5,7 +5,13 @@
 ```bash
 git clone https://github.com/zeroxf89/agenticSeek.git
 cd agenticSeek
-sudo ./quick_deploy.sh
+sudo ./final_deploy.sh
+```
+
+## 🔍 Check Deployment Status
+
+```bash
+./check_deployment.sh
 ```
 
 ## 🔄 Re-deploy (Pull & Run)
