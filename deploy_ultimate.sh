@@ -123,6 +123,11 @@ mkdir -p /root/agenticSeek/workspace
 
 # Step 6: Start Docker services
 echo "[6/8] Starting Docker services..."
+
+# Generate SEARXNG secret key for docker-compose
+export SEARXNG_SECRET_KEY=$(openssl rand -hex 32)
+echo "Generated SEARXNG_SECRET_KEY for docker-compose"
+
 systemctl start docker
 systemctl enable docker
 
