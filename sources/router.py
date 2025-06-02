@@ -68,23 +68,30 @@ class AgentRouter:
             pretty_print(f"Warning: Could not load pipeline: {e}", color="warning")
             return {}
 
-    def load_llm_router(self) -> AdaptiveClassifier:
+    def load_llm_router(self):
         """
         Load the LLM router model.
         returns:
-            AdaptiveClassifier: The loaded model
+            AdaptiveClassifier or None: The loaded model or None if not available
         exceptions:
             Exception: If the safetensors fails to load
         """
+        if not ADAPTIVE_CLASSIFIER_AVAILABLE:
+            pretty_print("Warning: AdaptiveClassifier not available, using fallback routing", color="warning")
+            return None
+            
         path = "../llm_router" if __name__ == "__main__" else "./llm_router"
         try:
             animate_thinking("Loading LLM router model...", color="status")
             talk_classifier = AdaptiveClassifier.from_pretrained(path)
+            return talk_classifier
         except Exception as e:
-            raise Exception("Failed to load the routing model. Please run the dl_safetensors.sh script inside llm_router/ directory to download the model.")
-        return talk_classifier
+            pretty_print(f"Warning: Failed to load routing model: {e}", color="warning")
+            return None
 
     def get_device(self) -> str:
+        if not TORCH_AVAILABLE:
+            return "cpu"
         if torch.backends.mps.is_available():
             return "mps"
         elif torch.cuda.is_available():
@@ -221,10 +228,13 @@ class AgentRouter:
             ("Create a Node.js app to query a public API for event listings and display them", "HIGH"),
             ("Find a file named ‘budget.xlsx’, analyze its data, and generate a chart", "HIGH"),
         ]
-        random.shuffle(few_shots)
-        texts = [text for text, _ in few_shots]
-        labels = [label for _, label in few_shots]
-        self.complexity_classifier.add_examples(texts, labels)
+        if self.complexity_classifier is not None:
+            random.shuffle(few_shots)
+            texts = [text for text, _ in few_shots]
+            labels = [label for _, label in few_shots]
+            self.complexity_classifier.add_examples(texts, labels)
+        else:
+            pretty_print("Skipping complexity classifier training - model not available", color="warning")
 
     def learn_few_shots_tasks(self) -> None:
         """
@@ -377,10 +387,13 @@ class AgentRouter:
             ("hi", "talk"),
             ("hello", "talk"),
         ]
-        random.shuffle(few_shots)
-        texts = [text for text, _ in few_shots]
-        labels = [label for _, label in few_shots]
-        self.talk_classifier.add_examples(texts, labels)
+        if self.talk_classifier is not None:
+            random.shuffle(few_shots)
+            texts = [text for text, _ in few_shots]
+            labels = [label for _, label in few_shots]
+            self.talk_classifier.add_examples(texts, labels)
+        else:
+            pretty_print("Skipping task classifier training - model not available", color="warning")
 
     def llm_router(self, text: str) -> tuple:
         """
@@ -388,6 +401,19 @@ class AgentRouter:
         Args:
             text: The input text
         """
+        if self.talk_classifier is None:
+            # Fallback to simple heuristics
+            if any(word in text.lower() for word in ["search", "web", "browse", "find online", "google"]):
+                return ("web", 0.8)
+            elif any(word in text.lower() for word in ["file", "folder", "document", "locate", "find"]):
+                return ("files", 0.8)
+            elif any(word in text.lower() for word in ["write", "code", "script", "program", "develop"]):
+                return ("code", 0.8)
+            elif any(word in text.lower() for word in ["mcp", "use a", "use mcp"]):
+                return ("mcp", 0.8)
+            else:
+                return ("talk", 0.6)
+                
         predictions = self.talk_classifier.predict(text)
         predictions = [pred for pred in predictions if pred[0] not in ["HIGH", "LOW"]]
         predictions = sorted(predictions, key=lambda x: x[1], reverse=True)
@@ -404,6 +430,23 @@ class AgentRouter:
         """
         if len(text) <= 8:
             return "talk"
+            
+        # If no models available, use simple heuristics
+        if not self.pipelines and self.talk_classifier is None:
+            result_llm_router = self.llm_router(text)
+            return result_llm_router[0]
+            
+        # If only LLM router available
+        if not self.pipelines:
+            result_llm_router = self.llm_router(text)
+            return result_llm_router[0]
+            
+        # If only BART available
+        if self.talk_classifier is None:
+            result_bart = self.pipelines['bart'](text, labels)
+            return result_bart['labels'][0]
+            
+        # Both models available - vote
         result_bart = self.pipelines['bart'](text, labels)
         result_llm_router = self.llm_router(text)
         bart, confidence_bart = result_bart['labels'][0], result_bart['scores'][0]
@@ -432,6 +475,20 @@ class AgentRouter:
         Returns:
         str: The estimated complexity
         """
+        if self.complexity_classifier is None:
+            # Fallback heuristics for complexity estimation
+            if any(word in text.lower() for word in ["build", "create", "develop", "make", "generate", "write", "code"]):
+                if any(word in text.lower() for word in ["app", "web", "server", "api", "database", "framework"]):
+                    return "HIGH"
+                elif any(word in text.lower() for word in ["script", "function", "simple", "basic"]):
+                    return "LOW"
+                else:
+                    return "LOW"
+            elif any(word in text.lower() for word in ["analyze", "research", "complex", "multiple", "several"]):
+                return "HIGH"
+            else:
+                return "LOW"
+                
         try:
             predictions = self.complexity_classifier.predict(text)
         except Exception as e:
