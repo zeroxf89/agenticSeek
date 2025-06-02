@@ -31,6 +31,11 @@ docker system prune -f 2>/dev/null || true
 rm -rf /tmp/pip-* /tmp/build-* 2>/dev/null || true
 apt-get clean && apt-get autoclean
 
+# CRITICAL: Remove deadsnakes PPA if exists (fix Ubuntu 24.10 oracular error)
+echo "Removing deadsnakes PPA if exists..."
+add-apt-repository --remove ppa:deadsnakes/ppa -y 2>/dev/null || true
+rm -f /etc/apt/sources.list.d/deadsnakes-ubuntu-ppa-*.list 2>/dev/null || true
+
 # Step 2: Install system dependencies (NO PPA!)
 echo "[2/8] Installing system dependencies..."
 export DEBIAN_FRONTEND=noninteractive
