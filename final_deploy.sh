@@ -38,6 +38,7 @@ apt-get install -y -qq \
     curl \
     unzip \
     chromium-browser \
+    net-tools \
     xvfb \
     portaudio19-dev \
     libsndfile1 \
@@ -46,12 +47,26 @@ apt-get install -y -qq \
 
 # Install all missing Python packages
 echo "🐍 Installing Python packages..."
+pip3 install --upgrade pip
+pip3 install uvicorn fastapi
 chmod +x install_all_missing.sh
 ./install_all_missing.sh
 
 # Install frontend dependencies
 echo "📱 Installing frontend dependencies..."
 cd frontend/agentic-seek-front
+
+# Create .env file if it doesn't exist
+if [ ! -f ".env" ]; then
+    echo "📝 Creating .env file..."
+    cat > .env << EOF
+HOST=0.0.0.0
+PORT=3000
+GENERATE_SOURCEMAP=false
+REACT_APP_API_URL=http://localhost:8000
+EOF
+fi
+
 npm install --no-optional --legacy-peer-deps
 cd ../..
 
@@ -64,7 +79,12 @@ cd ../..
 # Start backend
 echo "🔧 Starting backend..."
 cd /root/agenticSeek
-nohup python3 -m uvicorn api:app --host 0.0.0.0 --port 8000 > backend.log 2>&1 &
+# Try virtual environment first, fallback to system python with uvicorn
+if [ -d "agentic_seek_env" ]; then
+    nohup ./agentic_seek_env/bin/python -m uvicorn api:app --host 0.0.0.0 --port 8000 > backend.log 2>&1 &
+else
+    nohup python3 -m uvicorn api:app --host 0.0.0.0 --port 8000 > backend.log 2>&1 &
+fi
 BACKEND_PID=$!
 echo "Backend started with PID: $BACKEND_PID"
 

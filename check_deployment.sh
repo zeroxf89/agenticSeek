@@ -15,10 +15,22 @@ ps aux | grep -E "(node.*3000|react-scripts)" | grep -v grep || echo "❌ Fronte
 # Check ports
 echo "🔌 Port status:"
 echo "Port 8000 (Backend):"
-netstat -tlnp | grep :8000 || echo "❌ Port 8000 not listening"
+if command -v netstat > /dev/null; then
+    netstat -tlnp | grep :8000 || echo "❌ Port 8000 not listening"
+elif command -v ss > /dev/null; then
+    ss -tlnp | grep :8000 || echo "❌ Port 8000 not listening"
+else
+    echo "⚠️ No netstat or ss command available"
+fi
 
 echo "Port 3000 (Frontend):"
-netstat -tlnp | grep :3000 || echo "❌ Port 3000 not listening"
+if command -v netstat > /dev/null; then
+    netstat -tlnp | grep :3000 || echo "❌ Port 3000 not listening"
+elif command -v ss > /dev/null; then
+    ss -tlnp | grep :3000 || echo "❌ Port 3000 not listening"
+else
+    echo "⚠️ No netstat or ss command available"
+fi
 
 # Test backend health
 echo "🏥 Backend health check:"
@@ -63,7 +75,12 @@ free -h
 
 # Check Python packages
 echo "🐍 Python package check:"
-python3 -c "
+PYTHON_CMD="python3"
+if [ -d "agentic_seek_env" ]; then
+    PYTHON_CMD="./agentic_seek_env/bin/python"
+fi
+
+$PYTHON_CMD -c "
 try:
     from sources.router import AgentRouter
     print('✅ AgentRouter import successful')
