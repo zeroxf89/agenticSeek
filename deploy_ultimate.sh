@@ -9,6 +9,9 @@ set -e
 SERVER_IP="${SERVER_IP:-159.223.34.36}"
 OPENAI_API_KEY="${OPENAI_API_KEY:-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}"
 
+# TTS Option (Text-to-Speech) - Set to false to skip TTS packages
+INSTALL_TTS="${INSTALL_TTS:-true}"
+
 echo "🚀 AgenticSeek Ultimate Deployment"
 echo "=================================="
 echo "Server IP: $SERVER_IP"
@@ -92,7 +95,22 @@ pip install --no-cache-dir selenium markdownify fake_useragent selenium_stealth 
 echo "Installing additional providers..."
 pip install --no-cache-dir ollama
 
-echo "✅ Skipping heavy packages: torch, transformers, librosa, pyaudio, kokoro (not needed for OpenAI API)"
+# Optional TTS packages
+if [ "$INSTALL_TTS" = "true" ]; then
+    echo "Installing TTS packages (kokoro, soundfile, IPython)..."
+    pip install --no-cache-dir soundfile IPython
+    
+    # Try to install kokoro (may fail on some systems)
+    if pip install --no-cache-dir kokoro; then
+        echo "✅ TTS packages installed successfully"
+    else
+        echo "⚠️  Warning: kokoro installation failed, TTS will be disabled"
+    fi
+else
+    echo "✅ Skipping TTS packages (INSTALL_TTS=false)"
+fi
+
+echo "✅ Skipping heavy ML packages: torch, transformers, librosa, pyaudio (not needed for OpenAI API)"
 
 # Step 5: Configure for OpenAI
 echo "[5/8] Configuring for OpenAI API..."

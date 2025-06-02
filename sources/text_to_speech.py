@@ -5,9 +5,28 @@ import subprocess
 from sys import modules
 from typing import List, Tuple, Type, Dict
 
-from kokoro import KPipeline
-from IPython.display import display, Audio
-import soundfile as sf
+# Optional imports for TTS functionality
+try:
+    from kokoro import KPipeline
+    KOKORO_AVAILABLE = True
+except ImportError:
+    KOKORO_AVAILABLE = False
+    KPipeline = None
+
+try:
+    from IPython.display import display, Audio
+    IPYTHON_AVAILABLE = True
+except ImportError:
+    IPYTHON_AVAILABLE = False
+    display = None
+    Audio = None
+
+try:
+    import soundfile as sf
+    SOUNDFILE_AVAILABLE = True
+except ImportError:
+    SOUNDFILE_AVAILABLE = False
+    sf = None
 
 if __name__ == "__main__":
     from utility import pretty_print, animate_thinking
@@ -33,9 +52,18 @@ class Speech():
         }
         self.pipeline = None
         self.language = language
-        if enable:
-            self.pipeline = KPipeline(lang_code=self.lang_map[language])
-        self.voice = self.voice_map[language][voice_idx]
+        
+        # Check if TTS dependencies are available
+        if enable and KOKORO_AVAILABLE:
+            try:
+                self.pipeline = KPipeline(lang_code=self.lang_map[language])
+            except Exception as e:
+                pretty_print(f"Warning: Could not initialize TTS pipeline: {e}", color="warning")
+                self.pipeline = None
+        elif enable and not KOKORO_AVAILABLE:
+            pretty_print("Warning: TTS disabled - kokoro package not available", color="warning")
+            
+        self.voice = self.voice_map[language][voice_idx] if voice_idx < len(self.voice_map[language]) else self.voice_map[language][0]
         self.speed = 1.2
         self.voice_folder = ".voices"
         self.create_voice_folder(self.voice_folder)
@@ -58,28 +86,39 @@ class Speech():
             voice_idx (int, optional): Index of the voice to use from the voice map.
         """
         if not self.pipeline:
+            pretty_print("TTS disabled - pipeline not available", color="info")
             return
+            
+        if not SOUNDFILE_AVAILABLE:
+            pretty_print("TTS disabled - soundfile package not available", color="warning")
+            return
+            
         if voice_idx >= len(self.voice_map[self.language]):
             pretty_print("Invalid voice number, using default voice", color="error")
             voice_idx = 0
+            
         sentence = self.clean_sentence(sentence)
         audio_file = f"{self.voice_folder}/sample_{self.voice_map[self.language][voice_idx]}.wav"
         self.voice = self.voice_map[self.language][voice_idx]
-        generator = self.pipeline(
-            sentence, voice=self.voice,
-            speed=self.speed, split_pattern=r'\n+'
-        )
-        for i, (_, _, audio) in enumerate(generator):
-            if 'ipykernel' in modules: #only display in jupyter notebook.
-                display(Audio(data=audio, rate=24000, autoplay=i==0), display_id=False)
-            sf.write(audio_file, audio, 24000) # save each audio file
-            if platform.system().lower() == "windows":
-                import winsound
-                winsound.PlaySound(audio_file, winsound.SND_FILENAME)
-            elif platform.system().lower() == "darwin":  # macOS
-                subprocess.call(["afplay", audio_file])
-            else: # linux or other.
-                subprocess.call(["aplay", audio_file])
+        
+        try:
+            generator = self.pipeline(
+                sentence, voice=self.voice,
+                speed=self.speed, split_pattern=r'\n+'
+            )
+            for i, (_, _, audio) in enumerate(generator):
+                if 'ipykernel' in modules and IPYTHON_AVAILABLE: #only display in jupyter notebook.
+                    display(Audio(data=audio, rate=24000, autoplay=i==0), display_id=False)
+                sf.write(audio_file, audio, 24000) # save each audio file
+                if platform.system().lower() == "windows":
+                    import winsound
+                    winsound.PlaySound(audio_file, winsound.SND_FILENAME)
+                elif platform.system().lower() == "darwin":  # macOS
+                    subprocess.call(["afplay", audio_file])
+                else: # linux or other.
+                    subprocess.call(["aplay", audio_file])
+        except Exception as e:
+            pretty_print(f"TTS error: {e}", color="error")
 
     def replace_url(self, url: re.Match) -> str:
         """

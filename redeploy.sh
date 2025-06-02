@@ -30,6 +30,20 @@ if [ -d "agentic_seek_env" ] && [ -f "agentic_seek_env/bin/activate" ]; then
     # Activate virtual environment
     source agentic_seek_env/bin/activate
     
+    # Install missing TTS packages if needed
+    echo "Checking TTS dependencies..."
+    if ! python -c "import kokoro" 2>/dev/null; then
+        echo "Installing missing TTS packages..."
+        pip install --no-cache-dir soundfile IPython
+        if pip install --no-cache-dir kokoro; then
+            echo "✅ TTS packages installed"
+        else
+            echo "⚠️  TTS packages failed to install, will run without TTS"
+        fi
+    else
+        echo "✅ TTS packages already available"
+    fi
+    
     # Generate SEARXNG secret key for docker-compose
     export SEARXNG_SECRET_KEY=$(openssl rand -hex 32)
     echo "Generated SEARXNG_SECRET_KEY for docker-compose"
