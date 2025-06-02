@@ -14,6 +14,12 @@ sudo ./final_deploy.sh
 ./check_deployment.sh
 ```
 
+## 🧪 Test Frontend Structure
+
+```bash
+./test_frontend_structure.sh
+```
+
 ## 🔄 Re-deploy (Pull & Run)
 
 ```bash
