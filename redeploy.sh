@@ -74,6 +74,15 @@ if [ -d "agentic_seek_env" ] && [ -f "agentic_seek_env/bin/activate" ]; then
     python3 api.py > backend.log 2>&1 &
     
     sleep 15
+    
+    # Check backend status
+    if pgrep -f "python.*api.py" > /dev/null; then
+        echo "✅ Backend started successfully"
+    else
+        echo "❌ Backend failed to start. Check backend.log:"
+        tail -10 backend.log
+    fi
+    
     echo "✅ Smart re-deployment complete!"
 else
     echo "Running full deployment..."
