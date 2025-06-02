@@ -1,5 +1,11 @@
 # AgenticSeek Digital Ocean Deployment
 
+## 🔧 Quick Fix (If having deployment issues)
+
+```bash
+sudo ./quick_fix.sh
+```
+
 ## 🚀 Fresh Deploy (One Command)
 
 ```bash
