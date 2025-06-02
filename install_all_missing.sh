@@ -31,7 +31,7 @@ pip install markdownify>=1.1.0 beautifulsoup4 requests>=2.31.0
 pip install colorama>=0.4.6 python-dotenv>=1.0.0 termcolor>=2.4.0
 
 # Audio packages (optional)
-pip install soundfile>=0.13.1 || echo "⚠️ soundfile failed (optional)"
+pip install soundfile>=0.13.1 librosa || echo "⚠️ audio packages failed (optional)"
 
 # ML packages (optional)
 pip install torch>=2.4.1 || echo "⚠️ torch failed (optional)"
@@ -80,10 +80,10 @@ except Exception as e:
 try:
     import sys
     sys.path.append('.')
-    from sources.router import Router
-    print('✅ Router import OK')
+    from sources.router import AgentRouter
+    print('✅ AgentRouter import OK')
 except Exception as e:
-    print(f'❌ Router import failed: {e}')
+    print(f'❌ AgentRouter import failed: {e}')
 "
 
 echo "✅ Package installation completed!"

@@ -33,7 +33,7 @@ except Exception as e:
 
 # Test router import
 try:
-    from sources.router import Router
+    from sources.router import AgentRouter
     print('✅ Router import successful')
 except Exception as e:
     print(f'❌ Router import failed: {e}')

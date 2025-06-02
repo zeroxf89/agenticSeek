@@ -3,11 +3,38 @@ from typing import List, Tuple, Type, Dict
 import queue
 import threading
 import numpy as np
-import torch
 import time
-from transformers import AutoModelForSpeechSeq2Seq, AutoProcessor, pipeline
-import librosa
-import pyaudio
+
+# Optional audio imports
+try:
+    import torch
+    TORCH_AVAILABLE = True
+except ImportError:
+    TORCH_AVAILABLE = False
+    torch = None
+
+try:
+    from transformers import AutoModelForSpeechSeq2Seq, AutoProcessor, pipeline
+    TRANSFORMERS_AVAILABLE = True
+except ImportError:
+    TRANSFORMERS_AVAILABLE = False
+    AutoModelForSpeechSeq2Seq = None
+    AutoProcessor = None
+    pipeline = None
+
+try:
+    import librosa
+    LIBROSA_AVAILABLE = True
+except ImportError:
+    LIBROSA_AVAILABLE = False
+    librosa = None
+
+try:
+    import pyaudio
+    PYAUDIO_AVAILABLE = True
+except ImportError:
+    PYAUDIO_AVAILABLE = False
+    pyaudio = None
 
 audio_queue = queue.Queue()
 done = False
@@ -16,8 +43,11 @@ class AudioRecorder:
     """
     AudioRecorder is a class that records audio from the microphone and adds it to the audio queue.
     """
-    def __init__(self, format: int = pyaudio.paInt16, channels: int = 1, rate: int = 4096, chunk: int = 8192, record_seconds: int = 5, verbose: bool = False):
-        self.format = format
+    def __init__(self, format: int = None, channels: int = 1, rate: int = 4096, chunk: int = 8192, record_seconds: int = 5, verbose: bool = False):
+        if not PYAUDIO_AVAILABLE:
+            raise ImportError("pyaudio is not available. Audio recording is disabled.")
+        
+        self.format = format if format is not None else pyaudio.paInt16
         self.channels = channels
         self.rate = rate
         self.chunk = chunk
@@ -70,27 +100,39 @@ class Transcript:
     """
     def __init__(self):
         self.last_read = None
-        device = self.get_device()
-        torch_dtype = torch.float16 if device == "cuda" else torch.float32
-        model_id = "distil-whisper/distil-medium.en"
+        self.pipe = None
         
-        model = AutoModelForSpeechSeq2Seq.from_pretrained(
-            model_id, torch_dtype=torch_dtype, use_safetensors=True
-        )
-        model.to(device)
-        processor = AutoProcessor.from_pretrained(model_id)
-        
-        self.pipe = pipeline(
-            "automatic-speech-recognition",
-            model=model,
-            tokenizer=processor.tokenizer,
-            feature_extractor=processor.feature_extractor,
-            max_new_tokens=24, # a human say around 20 token in 7s
-            torch_dtype=torch_dtype,
-            device=device,
-        )
+        if not TORCH_AVAILABLE or not TRANSFORMERS_AVAILABLE:
+            print(Fore.YELLOW + "Warning: Audio transcription disabled - torch or transformers not available" + Fore.RESET)
+            return
+            
+        try:
+            device = self.get_device()
+            torch_dtype = torch.float16 if device == "cuda" else torch.float32
+            model_id = "distil-whisper/distil-medium.en"
+            
+            model = AutoModelForSpeechSeq2Seq.from_pretrained(
+                model_id, torch_dtype=torch_dtype, use_safetensors=True
+            )
+            model.to(device)
+            processor = AutoProcessor.from_pretrained(model_id)
+            
+            self.pipe = pipeline(
+                "automatic-speech-recognition",
+                model=model,
+                tokenizer=processor.tokenizer,
+                feature_extractor=processor.feature_extractor,
+                max_new_tokens=24, # a human say around 20 token in 7s
+                torch_dtype=torch_dtype,
+                device=device,
+            )
+        except Exception as e:
+            print(Fore.YELLOW + f"Warning: Failed to initialize audio transcription: {e}" + Fore.RESET)
+            self.pipe = None
     
     def get_device(self) -> str:
+        if not TORCH_AVAILABLE:
+            return "cpu"
         if torch.backends.mps.is_available():
             return "mps"
         if torch.cuda.is_available():
@@ -108,12 +150,18 @@ class Transcript:
     
     def transcript_job(self, audio_data: np.ndarray, sample_rate: int = 16000) -> str:
         """Transcribe the audio data."""
+        if self.pipe is None:
+            return "[Audio transcription not available]"
+            
         if audio_data.dtype != np.float32:
             audio_data = audio_data.astype(np.float32) / np.iinfo(audio_data.dtype).max
         if len(audio_data.shape) > 1:
             audio_data = np.mean(audio_data, axis=1)
         if sample_rate != 16000:
-            audio_data = librosa.resample(audio_data, orig_sr=sample_rate, target_sr=16000)
+            if LIBROSA_AVAILABLE:
+                audio_data = librosa.resample(audio_data, orig_sr=sample_rate, target_sr=16000)
+            else:
+                print(Fore.YELLOW + "Warning: librosa not available, skipping resampling" + Fore.RESET)
         result = self.pipe(audio_data)
         return self.remove_hallucinations(result["text"])
     
