@@ -181,7 +181,10 @@ if [ -f "src/App.js" ]; then
     fi
 fi
 
-# Build frontend for production
+# Build frontend for production with TMPDIR fix
+export TMPDIR="/root/tmp_pip"
+export TEMP="$TMPDIR"
+export TMP="$TMPDIR"
 npm run build 2>/dev/null || echo "Build skipped (dev mode)"
 
 cd ../..
@@ -206,9 +209,12 @@ if ! ps -p $BACKEND_PID > /dev/null; then
     exit 1
 fi
 
-# Start frontend
+# Start frontend with TMPDIR fix
 echo "Starting frontend..."
 cd frontend/agentic-seek-front
+export TMPDIR="/root/tmp_pip"
+export TEMP="$TMPDIR"
+export TMP="$TMPDIR"
 nohup npm start > ../../frontend.log 2>&1 &
 FRONTEND_PID=$!
 cd ../..
