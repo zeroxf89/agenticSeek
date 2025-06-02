@@ -1,6 +1,6 @@
 # AgenticSeek Digital Ocean Deployment
 
-## Super Quick Start (One Command)
+## 🚀 Fresh Deploy (One Command)
 
 ```bash
 git clone https://github.com/zeroxf89/agenticSeek.git
@@ -8,27 +8,36 @@ cd agenticSeek
 sudo ./quick_deploy.sh
 ```
 
-That's it! Access: http://159.223.34.36:3000
+## 🔄 Re-deploy (Pull & Run)
 
-## Manual Deploy (if needed)
+```bash
+cd agenticSeek
+sudo ./redeploy.sh
+```
 
-1. **Clone repository:**
+## 🎯 Access
+
+- Frontend: http://159.223.34.36:3000
+- Backend: http://159.223.34.36:8000
+
+## 🛠️ What's Fixed
+
+- ✅ Python 3.12 compatibility issues
+- ✅ Uses Python 3.10 specifically 
+- ✅ Skips heavy ML packages (not needed for OpenAI)
+- ✅ Installs only essential dependencies
+- ✅ Handles build dependencies properly
+- ✅ Easy re-deployment script
+
+## 📋 Manual Deploy (if needed)
+
 ```bash
 git clone https://github.com/zeroxf89/agenticSeek.git
 cd agenticSeek
-```
-
-2. **Deploy and run:**
-```bash
 export SERVER_IP=159.223.34.36
 export OPENAI_API_KEY=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
-chmod +x deploy_and_run.sh
-sudo ./deploy_and_run.sh
+sudo ./deploy_fixed.sh
 ```
-
-3. **Access:**
-- Frontend: http://159.223.34.36:3000
-- Backend: http://159.223.34.36:8000
 
 ## What the script does:
 
