@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # AgenticSeek Re-deployment Script
-# Pull latest code and redeploy
+# Pull latest code and redeploy (smart - skip completed steps)
 
 echo "🔄 AgenticSeek Re-deployment"
 echo "============================"
@@ -23,9 +23,48 @@ export OPENAI_API_KEY=sk-proj-kfo5CBamiKVGqLeYDGSxircaXkDUXADX8u9bKkeuTbkil3zecY
 # Make scripts executable
 chmod +x *.sh
 
-# Run ultimate deployment (fixes all known issues)
-echo "Running ultimate deployment..."
-sudo ./deploy_ultimate.sh
+# Check if virtual environment exists (smart deployment)
+if [ -d "agentic_seek_env" ] && [ -f "agentic_seek_env/bin/activate" ]; then
+    echo "Virtual environment exists, continuing from Docker step..."
+    
+    # Activate virtual environment
+    source agentic_seek_env/bin/activate
+    
+    # Generate SEARXNG secret key for docker-compose
+    export SEARXNG_SECRET_KEY=$(openssl rand -hex 32)
+    echo "Generated SEARXNG_SECRET_KEY for docker-compose"
+    
+    # Start Docker services
+    echo "Starting Docker services..."
+    systemctl start docker
+    systemctl enable docker
+    sleep 5
+    docker-compose up -d
+    sleep 10
+    
+    # Configure and start frontend
+    echo "Starting frontend..."
+    cd frontend/agentic-seek-front
+    if [ -f "src/config/api.js" ]; then
+        sed -i "s|localhost|$SERVER_IP|g" src/config/api.js
+    fi
+    if [ ! -d "node_modules" ]; then
+        npm install
+    fi
+    npm run build
+    npm start > ../../frontend.log 2>&1 &
+    cd ../..
+    
+    # Start backend
+    echo "Starting backend..."
+    python3 api.py > backend.log 2>&1 &
+    
+    sleep 15
+    echo "✅ Smart re-deployment complete!"
+else
+    echo "Running full deployment..."
+    sudo ./deploy_ultimate.sh
+fi
 
 echo ""
 echo "✅ Re-deployment complete!"
