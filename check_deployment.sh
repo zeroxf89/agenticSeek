@@ -9,8 +9,8 @@ echo "📊 Process status:"
 echo "Backend (uvicorn):"
 ps aux | grep uvicorn | grep -v grep || echo "❌ Backend not running"
 
-echo "Frontend (node):"
-ps aux | grep "node.*3000" | grep -v grep || echo "❌ Frontend not running"
+echo "Frontend (node/react-scripts):"
+ps aux | grep -E "(node.*3000|react-scripts)" | grep -v grep || echo "❌ Frontend not running"
 
 # Check ports
 echo "🔌 Port status:"

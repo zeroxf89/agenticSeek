@@ -55,10 +55,10 @@ python3 -c "
 import sys
 sys.path.append('.')
 try:
-    from sources.router import Router
-    print('✅ Router import OK')
+    from sources.router import AgentRouter
+    print('✅ AgentRouter import OK')
 except Exception as e:
-    print(f'❌ Router import failed: {e}')
+    print(f'❌ AgentRouter import failed: {e}')
 
 try:
     import api

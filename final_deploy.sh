@@ -51,15 +51,15 @@ chmod +x install_all_missing.sh
 
 # Install frontend dependencies
 echo "📱 Installing frontend dependencies..."
-cd frontend
+cd frontend/agentic-seek-front
 npm install --no-optional --legacy-peer-deps
-cd ..
+cd ../..
 
 # Build frontend
 echo "🏗️ Building frontend..."
-cd frontend
+cd frontend/agentic-seek-front
 TMPDIR="$TMPDIR" npm run build
-cd ..
+cd ../..
 
 # Start backend
 echo "🔧 Starting backend..."
@@ -83,11 +83,11 @@ fi
 
 # Start frontend
 echo "🌐 Starting frontend..."
-cd frontend
-nohup npm start > ../frontend.log 2>&1 &
+cd frontend/agentic-seek-front
+nohup npm start > ../../frontend.log 2>&1 &
 FRONTEND_PID=$!
 echo "Frontend started with PID: $FRONTEND_PID"
-cd ..
+cd ../..
 
 # Wait for frontend to start
 echo "⏳ Waiting for frontend to start..."
