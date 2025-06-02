@@ -79,44 +79,20 @@ pip install --no-cache-dir --upgrade pip wheel setuptools
 # Step 4: Install ONLY essential Python packages (skip problematic ones)
 echo "[4/8] Installing essential Python packages..."
 
-# Core web framework packages
-pip install --no-cache-dir \
-    fastapi>=0.115.12 \
-    uvicorn>=0.34.0 \
-    pydantic>=2.10.6 \
-    requests>=2.31.0 \
-    python-dotenv>=1.0.0 \
-    openai \
-    aiofiles>=24.1.0 \
-    python-multipart
+# Install packages one by one to avoid version constraint issues
+echo "Installing core web framework..."
+pip install --no-cache-dir fastapi uvicorn pydantic requests python-dotenv openai aiofiles python-multipart
 
-# Essential utilities
-pip install --no-cache-dir \
-    numpy>=1.24.4 \
-    colorama>=0.4.6 \
-    termcolor>=2.4.0 \
-    pypdf>=5.4.0 \
-    ipython>=8.13.0 \
-    httpx>=0.27,<0.29 \
-    anyio>=3.5.0,<5 \
-    tqdm \
-    sniffio \
-    ordered_set \
-    certifi>=2025.4.26
+echo "Installing utilities..."
+pip install --no-cache-dir numpy colorama termcolor pypdf ipython tqdm sniffio ordered_set certifi
 
-# Browser automation (essential for AgenticSeek)
-pip install --no-cache-dir \
-    selenium>=4.27.1 \
-    markdownify>=1.1.0 \
-    fake_useragent>=2.1.0 \
-    selenium_stealth>=1.0.6 \
-    undetected-chromedriver>=3.5.5
+echo "Installing browser automation..."
+pip install --no-cache-dir selenium markdownify fake_useragent selenium_stealth undetected-chromedriver
 
-# Additional providers (lightweight)
-pip install --no-cache-dir \
-    ollama>=0.4.7
+echo "Installing additional providers..."
+pip install --no-cache-dir ollama
 
-echo "Skipping heavy packages: torch, transformers, librosa, pyaudio, kokoro (not needed for OpenAI API)"
+echo "✅ Skipping heavy packages: torch, transformers, librosa, pyaudio, kokoro (not needed for OpenAI API)"
 
 # Step 5: Configure for OpenAI
 echo "[5/8] Configuring for OpenAI API..."
