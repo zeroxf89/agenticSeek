@@ -99,5 +99,11 @@ else
 fi
 
 echo ""
+echo "🔧 Quick Commands:"
+echo "   Restart backend only: sudo ./redeploy.sh"
+echo "   View backend logs:    tail -f backend.log"
+echo "   View frontend logs:   tail -f frontend.log"
+
+echo ""
 echo "✅ Re-deployment complete!"
 echo "Access: http://$SERVER_IP:3000"
