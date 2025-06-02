@@ -25,11 +25,15 @@ echo "✅ TMPDIR fixed: $TMPDIR"
 echo "Stopping existing services..."
 pkill -f "python.*api.py" 2>/dev/null || true
 pkill -f "npm.*start" 2>/dev/null || true
-
-# Start Docker services
-echo "Starting Docker services..."
 docker-compose down 2>/dev/null || true
-docker-compose up -d
+
+# Kill anything on port 3000
+echo "Freeing port 3000..."
+lsof -ti:3000 | xargs kill -9 2>/dev/null || true
+
+# Start Docker services (without frontend to avoid port conflict)
+echo "Starting Docker services..."
+docker-compose up -d redis searxng
 sleep 10
 
 # Check Docker services
@@ -40,6 +44,10 @@ docker-compose ps
 echo "Activating Python environment..."
 source agentic_seek_env/bin/activate
 export OPENAI_API_KEY="$OPENAI_API_KEY"
+
+# Install missing packages
+echo "Installing missing packages..."
+./install_missing.sh
 
 # Test backend startup
 echo "Testing backend startup..."

@@ -12,7 +12,13 @@ from urllib.parse import urlparse
 from fake_useragent import UserAgent
 from selenium_stealth import stealth
 import undetected_chromedriver as uc
-import chromedriver_autoinstaller
+# Optional chromedriver autoinstaller
+try:
+    import chromedriver_autoinstaller
+    CHROMEDRIVER_AUTOINSTALLER_AVAILABLE = True
+except ImportError:
+    CHROMEDRIVER_AUTOINSTALLER_AVAILABLE = False
+    chromedriver_autoinstaller = None
 import certifi
 import ssl
 import time
@@ -74,15 +80,21 @@ def install_chromedriver() -> str:
     """
     chromedriver_path = shutil.which("chromedriver")
     if not chromedriver_path:
-        try:
-            chromedriver_path = chromedriver_autoinstaller.install()
-        except Exception as e:
+        if CHROMEDRIVER_AUTOINSTALLER_AVAILABLE:
+            try:
+                chromedriver_path = chromedriver_autoinstaller.install()
+            except Exception as e:
+                raise FileNotFoundError(
+                    "ChromeDriver not found and could not be installed automatically. "
+                    "Please install it manually from https://chromedriver.chromium.org/downloads."
+                    "and ensure it's in your PATH or specify the path directly."
+                    "See know issues in readme if your chrome version is above 115."
+                ) from e
+        else:
             raise FileNotFoundError(
-                "ChromeDriver not found and could not be installed automatically. "
-                "Please install it manually from https://chromedriver.chromium.org/downloads."
-                "and ensure it's in your PATH or specify the path directly."
-                "See know issues in readme if your chrome version is above 115."
-            ) from e
+                "ChromeDriver not found and chromedriver_autoinstaller not available. "
+                "Please install chromedriver manually or install chromedriver_autoinstaller package."
+            )
     if not chromedriver_path:
         raise FileNotFoundError("ChromeDriver not found. Please install it or add it to your PATH.")
     return chromedriver_path
