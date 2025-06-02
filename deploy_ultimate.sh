@@ -12,6 +12,11 @@ OPENAI_API_KEY="${OPENAI_API_KEY:-sk-proj-kfo5CBamiKVGqLeYDGSxircaXkDUXADX8u9bKk
 # TTS Option (Text-to-Speech) - Set to false to skip TTS packages
 INSTALL_TTS="${INSTALL_TTS:-true}"
 
+# Fix TMPDIR issue - Use disk instead of tmpfs for large packages
+export TMPDIR="/root/tmp_pip"
+mkdir -p "$TMPDIR"
+echo "Using TMPDIR: $TMPDIR (avoiding tmpfs space issues)"
+
 echo "🚀 AgenticSeek Ultimate Deployment"
 echo "=================================="
 echo "Server IP: $SERVER_IP"
@@ -215,6 +220,10 @@ if ! ps -p $FRONTEND_PID > /dev/null; then
     tail -10 frontend.log
     exit 1
 fi
+
+# Cleanup temp directory
+echo "Cleaning up temporary files..."
+rm -rf "$TMPDIR"
 
 echo ""
 echo "✅ Deployment Complete!"

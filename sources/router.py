@@ -1,11 +1,29 @@
 import os
 import sys
-import torch
 import random
 from typing import List, Tuple, Type, Dict
 
-from transformers import pipeline
-from adaptive_classifier import AdaptiveClassifier
+# Optional ML imports
+try:
+    import torch
+    TORCH_AVAILABLE = True
+except ImportError:
+    TORCH_AVAILABLE = False
+    torch = None
+
+try:
+    from transformers import pipeline
+    TRANSFORMERS_AVAILABLE = True
+except ImportError:
+    TRANSFORMERS_AVAILABLE = False
+    pipeline = None
+
+try:
+    from adaptive_classifier import AdaptiveClassifier
+    ADAPTIVE_CLASSIFIER_AVAILABLE = True
+except ImportError:
+    ADAPTIVE_CLASSIFIER_AVAILABLE = False
+    AdaptiveClassifier = None
 
 from sources.agents.agent import Agent
 from sources.agents.code_agent import CoderAgent
@@ -37,10 +55,18 @@ class AgentRouter:
         returns:
             Dict[str, Type[pipeline]]: The loaded pipelines
         """
-        animate_thinking("Loading zero-shot pipeline...", color="status")
-        return {
-            "bart": pipeline("zero-shot-classification", model="facebook/bart-large-mnli")
-        }
+        if not TRANSFORMERS_AVAILABLE:
+            pretty_print("Warning: transformers not available, using fallback routing", color="warning")
+            return {}
+            
+        try:
+            animate_thinking("Loading zero-shot pipeline...", color="status")
+            return {
+                "bart": pipeline("zero-shot-classification", model="facebook/bart-large-mnli")
+            }
+        except Exception as e:
+            pretty_print(f"Warning: Could not load pipeline: {e}", color="warning")
+            return {}
 
     def load_llm_router(self) -> AdaptiveClassifier:
         """

@@ -34,12 +34,21 @@ if [ -d "agentic_seek_env" ] && [ -f "agentic_seek_env/bin/activate" ]; then
     echo "Checking TTS dependencies..."
     if ! python -c "import kokoro" 2>/dev/null; then
         echo "Installing missing TTS packages..."
+        
+        # Fix TMPDIR issue for large packages
+        export TMPDIR="/root/tmp_pip"
+        mkdir -p "$TMPDIR"
+        echo "Using TMPDIR: $TMPDIR (avoiding tmpfs space issues)"
+        
         pip install --no-cache-dir soundfile IPython
         if pip install --no-cache-dir kokoro; then
             echo "✅ TTS packages installed"
         else
             echo "⚠️  TTS packages failed to install, will run without TTS"
         fi
+        
+        # Cleanup temp directory
+        rm -rf "$TMPDIR"
     else
         echo "✅ TTS packages already available"
     fi
