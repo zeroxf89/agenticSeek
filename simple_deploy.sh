@@ -47,7 +47,7 @@ export OPENAI_API_KEY="$OPENAI_API_KEY"
 
 # Install missing packages
 echo "Installing missing packages..."
-./install_missing.sh
+./install_all_missing.sh
 
 # Test backend startup
 echo "Testing backend startup..."

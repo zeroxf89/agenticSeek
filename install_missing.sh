@@ -20,7 +20,7 @@ echo "Installing selenium packages..."
 pip install selenium>=4.27.1 fake_useragent>=2.1.0 selenium_stealth>=1.0.6 undetected-chromedriver>=3.5.5
 
 echo "Installing other missing packages..."
-pip install markdownify>=1.1.0 beautifulsoup4
+pip install markdownify>=1.1.0 beautifulsoup4 langid>=1.1.6 nltk
 
 # Test imports
 echo "Testing imports..."
@@ -45,6 +45,12 @@ print('✅ markdownify OK')
 
 from bs4 import BeautifulSoup
 print('✅ beautifulsoup4 OK')
+
+import langid
+print('✅ langid OK')
+
+import nltk
+print('✅ nltk OK')
 "
 
 echo "✅ All packages installed successfully!"
